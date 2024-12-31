@@ -1,0 +1,50 @@
+name: Update CyberChef
+
+on:
+  schedule:
+    - cron: '0 16 */1 * *'
+  workflow_dispatch:
+
+jobs:
+  check:
+    name: check
+    runs-on: ubuntu-latest
+    outputs:
+      remoteVersion: ${{ steps.versionCheck.outputs.remoteVersion }}
+      localVersion: ${{ steps.versionCheck.outputs.localVersion }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Check Version
+        id: versionCheck
+        run: |
+          REMOTEVERSION=$(wget -qO- https://api.github.com/repos/gchq/CyberChef/tags | gawk -F '["v]' '/name/{print $5;exit}')
+          LOCALVERSION=$(cat VERSION.txt)
+          echo "::set-output name=remoteVersion::$REMOTEVERSION"
+          echo "::set-output name=localVersion::$LOCALVERSION"
+
+  sync:
+    name: sync
+    needs: check
+    if: ${{ needs.check.outputs.remoteVersion != needs.check.outputs.localVersion }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Update CyberChef
+        run: |
+          rm -rf ./*
+          export REMOTEVERSION=$(wget -qO- https://api.github.com/repos/gchq/CyberChef/tags | gawk -F '["v]' '/name/{print $5;exit}')
+          wget https://github.com/gchq/CyberChef/releases/latest/download/CyberChef_v$REMOTEVERSION.zip -O CyberChef.zip
+          unzip CyberChef.zip
+          rm CyberChef.zip
+          mv *.html index.html
+          echo "$REMOTEVERSION" > VERSION.txt
+
+      - name: Commit latest webFile
+        run: |
+          git config --global user.email "132335755+k0baya@users.noreply.github.com"
+          git config --global user.name "k0baya"
+          git add ./*
+          git commit -m "[Upgrade] 🚀 Upload latest webFile"
+          git push origin HEAD:main
