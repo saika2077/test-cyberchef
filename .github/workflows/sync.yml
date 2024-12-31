@@ -43,8 +43,8 @@ jobs:
 
       - name: Commit latest webFile
         run: |
-          git config --global user.email "132335755+k0baya@users.noreply.github.com"
-          git config --global user.name "k0baya"
+          git config --global user.email "95666764+saika2077@users.noreply.github.com"
+          git config --global user.name "saika2077"
           git add ./*
           git commit -m "[Upgrade] 🚀 Upload latest webFile"
           git push origin HEAD:main
